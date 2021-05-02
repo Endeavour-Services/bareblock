@@ -1,14 +1,14 @@
-import pathlib
+import json
+import queue
+from concurrent.futures import ThreadPoolExecutor
 
 import flask
-import json
-import gnupg
-from flask import jsonify, request
-from concurrent.futures import ThreadPoolExecutor
-import threading
-import queue
-import hashlib
+from flask import jsonify, request, Response
+from jsonschema import validate
 
+from node.utils import get_hash, BlockList
+from node.gpg_utils import *
+from node.schema import property_schema
 
 queue = queue.LifoQueue(5)
 
@@ -16,61 +16,7 @@ queue = queue.LifoQueue(5)
 executor = ThreadPoolExecutor(8)
 counter = 0
 
-
-readlock = threading.Lock()
-writelock = threading.Lock()
-
-
-class wierdlist():
-
-    def __init__(self) -> None:
-        self.blocks = []
-        self.block_map = {}
-
-        self.last_hash = empty_hash
-
-    def add(self, value, hash):
-        readlock.acquire()
-        self.blocks.append({hash: hash, value: value})
-        self.block_map[hash] = value
-        self.last_hash = hash
-        readlock.release()
-
-    def all_blocks(self):
-        return list(self.block_map.keys())
-
-
-def get_hash(data):
-    if type(data) != bytes:
-        # wierd hack
-        # be warned
-        data = data.encode('utf-8')
-    gfg = hashlib.sha3_256()
-    gfg.update(data)
-    return gfg.hexdigest()
-
-
-empty_hash = get_hash('')
-blocks = wierdlist()
-
-path = pathlib.Path("/home/vscode/node")
-if not path.exists():
-    path.mkdir()
-
-
-gpg = gnupg.GPG(gnupghome=path)
-
-
-allkeys = gpg.list_keys()
-if len(allkeys) == 0:
-    input_data = gpg.gen_key_input(
-        name_email='node@dothttp.dev',
-        passphrase='test')
-
-    key = gpg.gen_key(input_data)
-
-node_keyid = allkeys[0]['keyid']
-node_fingerprint = allkeys[0]['fingerprint']
+blocks = BlockList()
 
 app = flask.Flask(__name__)
 
@@ -79,44 +25,51 @@ def create_block():
     messages = []
     while not queue.empty():
         message = queue.get()
-        messages.append(message['message'])
+        # you may just want to send decrypted
+        # TODO
+        messages.append(message)
     block = json.dumps(dict(message=messages, prev_hash=blocks.last_hash))
     block_hash = get_hash(block)
-    blocks.add(block, block_hash)
+    signed_hash = gpg.sign(block_hash, keyid=node_keyid)
+    blocks.add(block, block_hash, signed_hash.data.decode('utf-8'))
     queue.all_tasks_done()
-    print('hi')
 
 
-@app.route('/list', methods=['GET'])
-def list_blocks():
-    return jsonify(blocks.all_blocks())
+def invalid_input(message):
+    resp = jsonify(message=message)
+    resp.status_code = 400
+    return resp
 
 
-@app.route('/pick/<pick>', methods=['GET'])
-def get_block(pick):
-    return jsonify(blocks.block_map[pick])
+def invalid_error(message):
+    resp = jsonify(message=message)
+    resp.status_code = 500
+    return resp
 
 
 @app.route('/message', methods=['POST'])
 def recieve_message():
     body = request.get_json()
     try:
-        message: str = body.get("message", "")
-        decrypted = gpg.decrypt(message, passphrase="test")
+        message: str = body.get("message", {})
+        decrypted = json.loads(gpg.decrypt(
+            message, passphrase=passphrase).data)
+        if type(decrypted) != dict:
+            return invalid_input('invalid message, message has to json')
+        try:
+            validate(instance=decrypted, schema=property_schema)
+        except:
+            return invalid_input('invalid message schema')
         if decrypted:
             if queue.full():
                 executor.submit(create_block)
                 # queue.join()
             queue.put({"decrypted": decrypted, "message": message})
             return jsonify({'message': 'valid'})
-        response = jsonify({"message": "invalid pgp key"})
-        response.status_code = 400
-        return response
+        return invalid_input("invalid pgp key")
     except:
         pass
-    response = jsonify({"message": "invalid pgp key"})
-    response.status_code = 400
-    return response
+    return invalid_error('unknown error')
 
 
 @app.route('/register', methods=['POST'])
@@ -125,7 +78,7 @@ def register():
     try:
         pgp_key: str = body.get("pgp", "")
         if pgp_key.startswith("-----BEGIN PGP PUBLIC KEY BLOCK-----") and pgp_key.endswith("-----END PGP PUBLIC KEY BLOCK-----\n"):
-            imp_result = gpg.import_keys(pgp_key)
+            gpg.import_keys(pgp_key)
             ascii_armored_public_keys = gpg.export_keys(node_fingerprint)
             return jsonify({"message": "imported_successfully", 'public_key': ascii_armored_public_keys})
         response = jsonify({"message": "invalid pgp key"})
@@ -136,6 +89,39 @@ def register():
     response = jsonify({"message": "invalid pgp key"})
     response.status_code = 400
     return response
+
+
+@app.route('/block/count', methods=['GET'])
+def count_blocks():
+    return str(len(blocks.blocks))
+
+
+@app.route('/block/index/<int:index>', methods=['GET'])
+def get_by_index(index):
+    return jsonify(blocks.blocks[index])
+
+
+@app.route('/block/latest/', methods=['GET'])
+def get_latest_block():
+    return blocks.last_hash
+
+
+@app.route('/block/previous/<hash>', methods=['GET'])
+def get_previous_block(hash):
+    block = blocks.block_map[hash]
+    return jsonify(blocks.block_map[block['prev_hash']])
+
+
+
+
+@app.route('/block/list', methods=['GET'])
+def list_blocks():
+    return jsonify(blocks.all_blocks())
+
+
+@app.route('/block/<pick>', methods=['GET'])
+def get_block(pick):
+    return jsonify(blocks.block_map[pick])
 
 
 if __name__ == "__main__":

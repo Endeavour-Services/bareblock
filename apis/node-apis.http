@@ -41,7 +41,29 @@ iJ5KVXQCtky5gu/sI5ye/gHajSFerA==
 })
 
 
-GET "http://localhost:5000/list"
+
+@name('count of blocks')
+GET "http://localhost:5000/block/count"
 
 
-GET "http://localhost:5000/pick/81682abad3b75e1636512ba8c555e74c0000d0a3ea6fb78dbb632aeef47c9dbe"
+@name('get latest block hash')
+GET "http://localhost:5000/block/latest"
+
+
+
+@name('list blocks available')
+GET "http://localhost:5000/block/list"
+
+
+
+# not working
+@name('get previous block')
+GET "http://localhost:5000/block/previous/6f3459326940dfe6f4a01425ca05907d83b2bb56cee8ff41215a0cc8d6aa1359"
+
+@name('get specific block')
+GET "http://localhost:5000/block/6f3459326940dfe6f4a01425ca05907d83b2bb56cee8ff41215a0cc8d6aa1359"
+
+
+
+@name('get by  index')
+GET "http://localhost:5000/block/index/2"

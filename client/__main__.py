@@ -1,3 +1,4 @@
+import json
 import pathlib
 import gnupg
 import sys
@@ -7,6 +8,13 @@ import time
 session = requests.session()
 
 client_name = sys.argv[1]
+
+# change it
+passphrase = 'test'
+
+server_url = "http://localhost:5000/"
+
+node_id = "node@dothttp.dev"
 
 path = pathlib.Path(f"/home/vscode/{client_name}")
 if not path.exists():
@@ -32,12 +40,18 @@ if len(gpg.list_keys()) == 0:
 
 
 count = 0
-while True:
+for i in range(100):
     count += 1
     time.sleep(1)
-    message = f"test_{count}"
+    input_message = {
+        "message": {
+            "message": f"test_{count}"
+        }
+    }
+    message = json.dumps(input_message)
     signed_message = gpg.encrypt(
-        message, passphrase='test', always_trust=True, recipients=["node@dothttp.dev"])
-    print(session.post("http://localhost:5000/message", json={
+        message, passphrase=passphrase, always_trust=True, recipients=[node_id])
+    resp = session.post(f"{server_url}/message", json={
         "message": signed_message.data.decode('utf-8')
-    }))
+    })
+    print(input_message, resp.text)
