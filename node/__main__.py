@@ -98,7 +98,9 @@ def count_blocks():
 
 @app.route('/block/index/<int:index>', methods=['GET'])
 def get_by_index(index):
-    return jsonify(blocks.blocks[index])
+    if len(blocks.blocks) > index:
+        return jsonify(blocks.blocks[index])
+    return invalid_input('invalid index')
 
 
 @app.route('/block/latest/', methods=['GET'])
@@ -108,10 +110,13 @@ def get_latest_block():
 
 @app.route('/block/previous/<hash>', methods=['GET'])
 def get_previous_block(hash):
-    block = blocks.block_map[hash]
-    return jsonify(blocks.block_map[block['prev_hash']])
-
-
+    if hash in blocks.block_map:
+        block = blocks.block_map[hash]
+        prev_hash = block['prev_hash']
+        if prev_hash in blocks.block_map:
+            return jsonify(blocks.block_map[prev_hash])
+        return invalid_input('first block woudn\'t have prev block')
+    return invalid_input('invalid hash')
 
 
 @app.route('/block/list', methods=['GET'])
@@ -121,7 +126,9 @@ def list_blocks():
 
 @app.route('/block/<pick>', methods=['GET'])
 def get_block(pick):
-    return jsonify(blocks.block_map[pick])
+    if pick in blocks.block_map:
+        return blocks.block_map[pick]
+    return invalid_input("invalid hash")
 
 
 if __name__ == "__main__":

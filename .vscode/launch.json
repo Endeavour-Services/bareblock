@@ -5,6 +5,12 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "unittest",
+            "type": "python",
+            "request": "launch",
+            "module": "unittest"
+        },
+        {
             "name": "node",
             "type": "python",
             "request": "launch",

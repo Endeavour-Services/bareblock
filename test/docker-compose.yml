@@ -1,0 +1,12 @@
+version: 3
+services:
+  node:
+    image: python:3.9
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+  client:
+    depends_on:
+      - node
+    image: python:3.9
