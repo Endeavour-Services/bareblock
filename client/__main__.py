@@ -15,8 +15,7 @@ passphrase = 'test'
 server_url = "http://localhost:5000/"
 
 node_id = "node@dothttp.dev"
-
-path = pathlib.Path(f"/home/vscode/{client_name}")
+path = pathlib.Path(f"/node/{client_name}", parents=True)
 if not path.exists():
     path.mkdir()
 
@@ -45,7 +44,7 @@ for i in range(100):
     time.sleep(1)
     input_message = {
         "message": {
-            "message": f"test_{count}"
+            "message": f"test_{client_name}_{count}"
         }
     }
     message = json.dumps(input_message)

@@ -58,10 +58,10 @@ GET "http://localhost:5000/block/list"
 
 # not working
 @name('get previous block')
-GET "http://localhost:5000/block/previous/6a1f1b0a52383e165f0a8687ba14b2047505b9e627346ce0fab8b6701bcefb62"
+GET "http://localhost:5000/block/previous/47cecb4606e3c5ed0cda1fa607923a132dc18a5a1d55e0754cf4eb6a5ffd2924"
 
 @name('get specific block')
-GET "http://localhost:5000/block/6f3459326940dfe6f4a01425ca05907d83b2bb56cee8ff41215a0cc8d6aa1359"
+GET "http://localhost:5000/block/47cecb4606e3c5ed0cda1fa607923a132dc18a5a1d55e0754cf4eb6a5ffd2924"
 
 
 

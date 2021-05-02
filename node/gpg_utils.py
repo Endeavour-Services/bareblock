@@ -6,7 +6,7 @@ import gnupg
 # path
 # change permissions of this path
 # reading this directory can leak private keys
-path = pathlib.Path("/home/vscode/node")
+path = pathlib.Path("/node")
 # change it
 # get it from oskeychain
 passphrase = 'test'
@@ -28,6 +28,7 @@ if len(allkeys) == 0:
         passphrase=passphrase)
 
     key = gpg.gen_key(input_data)
+    allkeys = gpg.list_keys()
 
 node_keyid = allkeys[0]['keyid']
 node_fingerprint = allkeys[0]['fingerprint']

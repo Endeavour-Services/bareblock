@@ -1,0 +1,12 @@
+version: '3.0'
+services:
+  node:
+    build: .
+    ports:
+      - "5000:5000"
+    command: python -m node
+  client:
+    depends_on:
+      - node
+    build: .
+    command: python -m unittest

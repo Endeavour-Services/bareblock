@@ -3,14 +3,16 @@ import queue
 from concurrent.futures import ThreadPoolExecutor
 
 import flask
-from flask import jsonify, request, Response
+from flask import Response, jsonify, request
 from jsonschema import validate
 
-from node.utils import get_hash, BlockList
 from node.gpg_utils import *
 from node.schema import property_schema
+from node.utils import BlockList, get_hash
 
-queue = queue.LifoQueue(5)
+# currently its using inmemory, can be changed it to pg or mysql
+# when going to scale, queue should be externalized and should be run gunicorn/uwsgi
+queue = queue.Queue(5)
 
 
 executor = ThreadPoolExecutor(8)
@@ -132,4 +134,4 @@ def get_block(pick):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0")
