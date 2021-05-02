@@ -15,7 +15,7 @@ passphrase = 'test'
 server_url = "http://localhost:5000/"
 
 node_id = "node@dothttp.dev"
-path = pathlib.Path(f"/node/{client_name}", parents=True)
+path = pathlib.Path(f"./clients_root/{client_name}", parents=True)
 if not path.exists():
     path.mkdir()
 
