@@ -8,8 +8,9 @@ class Client:
 
     def __init__(self, port=37020) -> None:
         self.port = port
+        self.set_client()
 
-    def get_client(self):
+    def set_client(self):
         client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM,
                                socket.IPPROTO_UDP)  # UDP
         client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -19,11 +20,10 @@ class Client:
         return client
 
     def sendto(self, message):
-        self.client.sendto(message, ("<broadcast>", 37020))
+        self.client.sendto(message, ("<broadcast>", self.port))
 
     def recvfrom(self):
-        data, addr = self.client.recvfrom(1024)
-        print(f"recieved from {addr}")
+        data, addr = self.client.recvfrom(10240)
         return data, addr
 
 
