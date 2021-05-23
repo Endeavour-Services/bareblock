@@ -1,5 +1,8 @@
 import hashlib
 import threading
+import sys
+from merklelib import MerkleTree
+import json
 
 readlock = threading.Lock()
 writelock = threading.Lock()
@@ -13,6 +16,18 @@ def get_hash(data):
     gfg = hashlib.sha3_256()
     gfg.update(data)
     return gfg.hexdigest()
+
+
+def eprint(*args):
+    print(*args, file=sys.stderr)
+
+
+def hashfunc(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+def merkley_helper(transactions):
+    return MerkleTree([json.dumps(tran) for tran in transactions], hashfunc)
 
 
 empty_hash = get_hash('')

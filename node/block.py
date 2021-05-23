@@ -1,13 +1,11 @@
-import hashlib
-import time
-import random
 import json
+import random
+import time
 import uuid
+from . import gpg_utils
+from .constants import *
 
-
-def hashfunc(value):
-    return hashlib.sha256(value).hexdigest()
-
+from .utils import hashfunc, merkley_helper, eprint
 
 
 def generate_message(sender, reciever):
@@ -24,3 +22,26 @@ def generate_message(sender, reciever):
         'type': 'message'
     })
 
+
+class BlockHandler:
+    def __init__(self, transaction_channel, all_recipents) -> None:
+        self.transactions = []
+        self.transaction_channel = transaction_channel
+        self.all_recipents = all_recipents
+
+    def add_transaction(self, message):
+        self.transactions.append(message)
+        if len(self.transactions) == TRANSACTION_PACK_BLOCK_LIMIT:
+            eprint(f"transactions met limit {TRANSACTION_PACK_BLOCK_LIMIT}")
+            tree = merkley_helper(self.transactions)
+            block = {
+                'merkleRoot': tree.merkle_root,
+                'transactions': self.transactions,
+                'signature': gpg_utils.gpg.sign(tree.merkle_root).data.decode(),
+                'type': 'block'
+            }
+            b_unencrypted = json.dumps(block)
+            b_encrypted = gpg_utils.gpg.encrypt(
+                b_unencrypted, always_trust=True, recipients=self.all_recipents)
+            self.transaction_channel.sendto(b_encrypted.data)
+            self.transactions = []
