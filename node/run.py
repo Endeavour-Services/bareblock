@@ -32,7 +32,7 @@ def load():
     return all_recipents
 
 
-def send_messages_randomly(transaction_channel, all_recipents):
+def integrity_check_fail_send(transaction_channel, all_recipents):
     rand = random.Random()
     while True:
         eprint('starting sending message')
@@ -89,7 +89,7 @@ def main():
     transaction_channel = Client(TRANSACTION_PORT)
     recv_channel = Client(TRANSACTION_PORT)
     transaction_sender = threading.Thread(
-        target=send_messages_randomly, args=(transaction_channel, all_recipents))
+        target=integrity_check_fail_send, args=(transaction_channel, all_recipents))
     transaction_sender.start()
     handler = BlockHandler(transaction_channel, all_recipents)
     while True:

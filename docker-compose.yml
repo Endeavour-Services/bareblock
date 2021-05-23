@@ -72,9 +72,11 @@ services:
     volumes:
       - ./export:/export
       - .:/app
-  node9:
+  # malicious node
+  mali:
     build:
       context: .
+      dockerfile: ./Dockerfile.mali
       args:
         - NAME=9
     volumes:

@@ -32,16 +32,24 @@ class BlockHandler:
     def add_transaction(self, message):
         self.transactions.append(message)
         if len(self.transactions) == TRANSACTION_PACK_BLOCK_LIMIT:
-            eprint(f"transactions met limit {TRANSACTION_PACK_BLOCK_LIMIT}")
-            tree = merkley_helper(self.transactions)
-            block = {
-                'merkleRoot': tree.merkle_root,
-                'transactions': self.transactions,
-                'signature': gpg_utils.gpg.sign(tree.merkle_root).data.decode(),
-                'type': 'block'
-            }
-            b_unencrypted = json.dumps(block)
-            b_encrypted = gpg_utils.gpg.encrypt(
-                b_unencrypted, always_trust=True, recipients=self.all_recipents)
-            self.transaction_channel.sendto(b_encrypted.data)
-            self.transactions = []
+            self.generate_and_send_block()
+
+    def generate_and_send_block(self):
+        eprint(f"transactions met limit {TRANSACTION_PACK_BLOCK_LIMIT}")
+        merkle_root_hash = self.get_merkley_root_hash()
+        block = {
+            'merkleRoot': merkle_root_hash,
+            'transactions': self.transactions,
+            'signature': gpg_utils.gpg.sign(merkle_root_hash).data.decode(),
+            'type': 'block'
+        }
+        b_unencrypted = json.dumps(block)
+        b_encrypted = gpg_utils.gpg.encrypt(
+            b_unencrypted, always_trust=True, recipients=self.all_recipents)
+        self.transaction_channel.sendto(b_encrypted.data)
+        self.transactions = []
+
+    def get_merkley_root_hash(self):
+        tree = merkley_helper(self.transactions)
+        merkle_root_hash = tree.merkle_root
+        return merkle_root_hash
