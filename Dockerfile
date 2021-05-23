@@ -9,4 +9,4 @@ ARG NAME
 RUN NAME=${NAME} python /app/node/gpg_utils.py
 ADD . /app
 WORKDIR /app
-CMD cp /signatures/* /export/ && sleep 10 && NAME=${NAME} python -m node
+CMD cp /signatures/* /export/ && sleep 10 && NAME=${NAME} python -m node.run
