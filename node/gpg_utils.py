@@ -1,14 +1,9 @@
-
 import pathlib
 import gnupg
+import os
+name = 'node' + os.environ['NAME']
 
-
-# path
-# change permissions of this path
-# reading this directory can leak private keys
 path = pathlib.Path("/node")
-# change it
-# get it from oskeychain
 passphrase = 'test'
 
 
@@ -18,7 +13,7 @@ if not path.exists():
 
 gpg = gnupg.GPG(gnupghome=path)
 
-node_id = 'node@dothttp.dev'
+node_id = f'{name}@dothttp.dev'
 
 
 allkeys = gpg.list_keys()
@@ -29,6 +24,12 @@ if len(allkeys) == 0:
 
     key = gpg.gen_key(input_data)
     allkeys = gpg.list_keys()
+    node_keyid = allkeys[0]['keyid']
+    node_fingerprint = allkeys[0]['fingerprint']
+    ascii_armored_public_keys = gpg.export_keys(node_fingerprint)
+    os.mkdir('/signatures')
+    with open(f'/signatures/{node_id}.key', 'w') as f:
+        f.write(ascii_armored_public_keys)
 
 node_keyid = allkeys[0]['keyid']
 node_fingerprint = allkeys[0]['fingerprint']

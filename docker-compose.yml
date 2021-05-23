@@ -1,12 +1,94 @@
 version: '3.0'
 services:
-  node:
-    build: .
-    ports:
-      - "5000:5000"
-    command: python -m node
-  client:
-    depends_on:
-      - node
-    build: .
-    command: python -m unittest
+  node0:
+    build:
+      context: .
+      args:
+        - NAME=0
+    volumes: 
+      - node0:/node
+      - ./export:/export
+  node1:
+    build:
+      context: .
+      args:
+        - NAME=1
+    volumes:
+      - node1:/node
+      - ./export:/export
+  node2:
+    build:
+      context: .
+      args:
+        - NAME=2
+    volumes:
+      - node2:/node
+      - ./export:/export
+  node3:
+    build:
+      context: .
+      args:
+        - NAME=3
+    volumes:
+      - node3:/node
+      - ./export:/export
+  node4:
+    build:
+      context: .
+      args:
+        - NAME=4
+    volumes:
+      - node4:/node
+      - ./export:/export
+  node5:
+    build:
+      context: .
+      args:
+        - NAME=5
+    volumes:
+      - node5:/node
+      - ./export:/export
+  node6:
+    build:
+      context: .
+      args:
+        - NAME=6
+    volumes:
+      - node6:/node
+      - ./export:/export
+  node7:
+    build:
+      context: .
+      args:
+        - NAME=7
+    volumes:
+      - node7:/node
+      - ./export:/export
+  node8:
+    build:
+      context: .
+      args:
+        - NAME=8
+    volumes:
+      - node8:/node
+      - ./export:/export
+  node9:
+    build:
+      context: .
+      args:
+        - NAME=9
+    volumes:
+      - node9:/node
+      - ./export:/export
+
+volumes:
+  node0:
+  node1:
+  node2:
+  node3:
+  node4:
+  node5:
+  node6:
+  node7:
+  node8:
+  node9:
