@@ -55,8 +55,6 @@ GET "http://localhost:5000/block/latest"
 GET "http://localhost:5000/block/list"
 
 
-
-# not working
 @name('get previous block')
 GET "http://localhost:5000/block/previous/47cecb4606e3c5ed0cda1fa607923a132dc18a5a1d55e0754cf4eb6a5ffd2924"
 
