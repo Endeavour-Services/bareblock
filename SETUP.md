@@ -7,7 +7,7 @@ Install docker by following steps in [here](https://docs.docker.com/engine/insta
 
 ## Run Happy path
 
-`docker-compose node1 node2 node3` ....
+`docker-compose up node1 node2 node3` ....
 
 ## Running fail tests
 `docker-compose mali`

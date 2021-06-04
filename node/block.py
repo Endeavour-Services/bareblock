@@ -19,6 +19,7 @@ def generate_message(sender, reciever):
     return json.dumps({
         'hash': hashfunc(transaction.encode()),
         'transaction': transaction,
+        'smsignature': gpg_utils.privKey.sign(transaction, encoding='hex'),
         'type': 'message'
     })
 
@@ -41,6 +42,7 @@ class BlockHandler:
             'merkleRoot': merkle_root_hash,
             'transactions': self.transactions,
             'signature': gpg_utils.gpg.sign(merkle_root_hash).data.decode(),
+            'smsignature': gpg_utils.privKey.sign(merkle_root_hash, encoding='hex'),
             'type': 'block'
         }
         b_unencrypted = json.dumps(block)

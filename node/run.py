@@ -68,20 +68,29 @@ def run_for_message(recv, handler):
         if (merkleRootHash == generated_merkle_hash.merkle_root):
             eprint("block hash verified")
 
-            # verify random trasaction of block
-            random_transaction_int = random.randint(
-                0, len(message['transactions'])-1)
-            random_transaction = message['transactions'][random_transaction_int]
-            transaction_encoded_to_verify = json.dumps(
-                random_transaction).encode()
-            proof = generated_merkle_hash.get_proof(
-                transaction_encoded_to_verify)
-            if generated_merkle_hash.verify_leaf_inclusion(transaction_encoded_to_verify, proof):
-                eprint('transaction verified')
+            if (gpg_utils.pubKey.verify(message['smsignature'], message['transactions'], encoding='hex')):
+                eprint("block sign verified")
+
+                # verify random trasaction of block
+                random_transaction_int = random.randint(
+                    0, len(message['transactions'])-1)
+                random_transaction = message['transactions'][random_transaction_int]
+                transaction_encoded_to_verify = json.dumps(
+                    random_transaction).encode()
+                proof = generated_merkle_hash.get_proof(
+                    transaction_encoded_to_verify)
+                if generated_merkle_hash.verify_leaf_inclusion(transaction_encoded_to_verify, proof):
+                    eprint('transaction verified')
+
+                    if (gpg_utils.pubKey.verify(transaction_encoded_to_verify['smsignature'], transaction_encoded_to_verify['transaction'], encoding='hex')):
+                        eprint("transaction sign verified")
+
+                else:
+                    eprint("transaction failed")
             else:
-                eprint("transaction failed")
+                raise BlockSignFailed()
         else:
-            raise MerkleyHashFailedFailed()
+            raise MerkleyHashFailed()
 
 
 def main():
