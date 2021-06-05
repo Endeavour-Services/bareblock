@@ -40,7 +40,7 @@ def modify_hash_to_transaction_fail(sender, reciever):
     return json.dumps({
         'hash': hashfunc(transaction.encode())+"hai",
         'transaction': transaction,
-        'smsignature': gpg_utils.private_key_ed255.sign(transaction, encoding='hex'),
+        'signature': gpg_utils.private_key_ed255.sign(transaction, encoding='hex'),
         'type': 'message'
     })
 

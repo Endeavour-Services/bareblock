@@ -41,14 +41,14 @@ def load():
     return all_recipents
 
 
-def verify_message(sigature, hash):
+def verify_message(sigature, hash, exc_class):
     for key in public_key_ed255:
         try:
             key.verify(sigature, hash, encoding='hex')
             return True
         except:
             pass
-    raise BlockSignFailed()
+    raise exc_class()
 
 
 def integrity_check_fail_send(transaction_channel, all_recipents):
@@ -87,7 +87,7 @@ def run_for_message(recv, handler):
         if (merkleRootHash == generated_merkle_hash.merkle_root):
             eprint("block hash verified")
 
-            if (verify_message(message['signature'], message['merkleRoot'].encode())):
+            if verify_message(message['signature'], message['merkleRoot'].encode(), BlockSignFailed):
                 eprint("block sign verified")
 
                 # verify random trasaction of block
@@ -103,7 +103,7 @@ def run_for_message(recv, handler):
                     # eprint("transaction recieved", transaction_encoded_to_verify)
                     transaction_encoded_to_verify_obj = json.loads(
                         transaction_encoded_to_verify)
-                    if (verify_message(transaction_encoded_to_verify_obj['signature'], transaction_encoded_to_verify_obj['hash'].encode())):
+                    if verify_message(transaction_encoded_to_verify_obj['signature'], transaction_encoded_to_verify_obj['hash'].encode(), TransactionSignFailed):
                         eprint("transaction sign verified")
 
                 else:
