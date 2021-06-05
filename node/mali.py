@@ -40,7 +40,7 @@ def modify_hash_to_transaction_fail(sender, reciever):
     return json.dumps({
         'hash': hashfunc(transaction.encode())+"hai",
         'transaction': transaction,
-        'smsignature': gpg_utils.privKey.sign(transaction, encoding='hex'),
+        'smsignature': gpg_utils.private_key_ed255.sign(transaction, encoding='hex'),
         'type': 'message'
     })
 
@@ -79,7 +79,7 @@ def main2():
     handler = BlockHandler(transaction_channel, all_recipents)
     mali_handler = MaliBlockHandler(transaction_channel, all_recipents)
     while True:
-        eprint("waiting for recive")
+        eprint("waiting for receive")
         # using select and different channels would  be better choice
         # for now going with same channel and type identifier
         recv, addr = recv_channel.recvfrom()

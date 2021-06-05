@@ -16,10 +16,12 @@ def generate_message(sender, reciever):
         'amount': random.choice(range(1, 100)),
         'timestamp': int(round(time.time() * 1000))
     })
+    hash = hashfunc(transaction.encode())
+    signature = gpg_utils.private_key_ed255.sign(hash.encode(), encoding='hex')
     return json.dumps({
-        'hash': hashfunc(transaction.encode()),
+        'hash': hash,
         'transaction': transaction,
-        'smsignature': gpg_utils.privKey.sign(transaction, encoding='hex'),
+        'signature': signature.decode(),
         'type': 'message'
     })
 
@@ -38,11 +40,12 @@ class BlockHandler:
     def generate_and_send_block(self):
         eprint(f"transactions met limit {TRANSACTION_PACK_BLOCK_LIMIT}")
         merkle_root_hash = self.get_merkley_root_hash()
+        signature = gpg_utils.private_key_ed255.sign(
+            merkle_root_hash.encode(), encoding='hex')
         block = {
             'merkleRoot': merkle_root_hash,
             'transactions': self.transactions,
-            'signature': gpg_utils.gpg.sign(merkle_root_hash).data.decode(),
-            'smsignature': gpg_utils.privKey.sign(merkle_root_hash, encoding='hex'),
+            'signature': signature.decode(),
             'type': 'block'
         }
         b_unencrypted = json.dumps(block)

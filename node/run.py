@@ -1,6 +1,8 @@
 import json
 import traceback
 
+from ed25519.keys import SigningKey, VerifyingKey
+
 from . import gpg_utils
 from .utils import eprint, merkley_helper, hashfunc
 from .block import BlockHandler, generate_message
@@ -13,6 +15,9 @@ import threading
 import time
 
 
+public_key_ed255 = []
+
+
 def load():
     files = os.listdir(SIGNATURE_DIR)
     all_recipents = []
@@ -20,16 +25,30 @@ def load():
     for filename in files:
         root_file_path = os.path.join(SIGNATURE_DIR, filename)
         if os.path.isfile(root_file_path):
-            with open(root_file_path) as f:
-                try:
-                    key_data = f.read()
-                    gpg_utils.gpg.import_keys(key_data)
-                    eprint(f'were able to import {filename}')
-                    all_recipents.append(
-                        os.path.basename(filename).strip(".key"))
-                except:
-                    eprint(f'trouble loading {filename}')
+            with open(root_file_path, 'rb') as f:
+                if not root_file_path.endswith('.ed25519'):
+                    try:
+                        key_data = f.read()
+                        gpg_utils.gpg.import_keys(key_data)
+                        eprint(f'were able to import {filename}')
+                        all_recipents.append(
+                            os.path.basename(filename).strip(".key"))
+                    except:
+                        eprint(f'trouble loading {filename}')
+                else:
+                    # loading ed25519 signature for all available nodes
+                    public_key_ed255.append(VerifyingKey(f.read()))
     return all_recipents
+
+
+def verify_message(sigature, hash):
+    for key in public_key_ed255:
+        try:
+            key.verify(sigature, hash, encoding='hex')
+            return True
+        except:
+            pass
+    raise BlockSignFailed()
 
 
 def integrity_check_fail_send(transaction_channel, all_recipents):
@@ -68,7 +87,7 @@ def run_for_message(recv, handler):
         if (merkleRootHash == generated_merkle_hash.merkle_root):
             eprint("block hash verified")
 
-            if (gpg_utils.pubKey.verify(message['smsignature'], message['transactions'], encoding='hex')):
+            if (verify_message(message['signature'], message['merkleRoot'].encode())):
                 eprint("block sign verified")
 
                 # verify random trasaction of block
@@ -81,8 +100,10 @@ def run_for_message(recv, handler):
                     transaction_encoded_to_verify)
                 if generated_merkle_hash.verify_leaf_inclusion(transaction_encoded_to_verify, proof):
                     eprint('transaction verified')
-
-                    if (gpg_utils.pubKey.verify(transaction_encoded_to_verify['smsignature'], transaction_encoded_to_verify['transaction'], encoding='hex')):
+                    # eprint("transaction recieved", transaction_encoded_to_verify)
+                    transaction_encoded_to_verify_obj = json.loads(
+                        transaction_encoded_to_verify)
+                    if (verify_message(transaction_encoded_to_verify_obj['signature'], transaction_encoded_to_verify_obj['hash'].encode())):
                         eprint("transaction sign verified")
 
                 else:
@@ -102,7 +123,7 @@ def main():
     transaction_sender.start()
     handler = BlockHandler(transaction_channel, all_recipents)
     while True:
-        eprint("waiting for recive")
+        eprint("waiting for receive")
         # using select and different channels would  be better choice
         # for now going with same channel and type identifier
         recv, addr = recv_channel.recvfrom()

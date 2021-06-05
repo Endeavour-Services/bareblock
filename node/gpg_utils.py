@@ -1,5 +1,6 @@
 import pathlib
 import ed25519
+from ed25519.keys import SigningKey
 import gnupg
 import os
 name = 'node' + os.environ['NAME']
@@ -31,12 +32,15 @@ if len(allkeys) == 0:
     os.mkdir('/signatures')
     with open(f'/signatures/{node_id}.key', 'w') as f:
         f.write(ascii_armored_public_keys)
+    private_key_ed255, public_key_ed255 = ed25519.create_keypair()
+    with open(f'/signatures/{node_id}_public.ed25519', 'wb') as f:
+        f.write(public_key_ed255.to_bytes())
+    os.mkdir("/node_private")
+    with open(f'/node_private/{node_id}_private.ed25519', 'wb') as f:
+        f.write(private_key_ed255.to_bytes())
 
 node_keyid = allkeys[0]['keyid']
 node_fingerprint = allkeys[0]['fingerprint']
-
-# Generating ed25519 key pairs and storing inside signatures directory
-privKey, pubKey = ed25519.create_keypair()
-# os.mkdir('/signatures')
-# with open(f'/signatures/{node_id}_ed25519_pub.key', 'w') as f:
-#     f.write(pubKey)
+existing_private_ed255_key = os.listdir('/node_private/')[0]
+with open(os.path.join('/node_private/', existing_private_ed255_key), 'rb') as f:
+    private_key_ed255 = SigningKey(f.read())
